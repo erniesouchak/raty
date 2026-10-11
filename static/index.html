@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0f0f13">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Raty">
+<title>Raty</title>
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icon-192v2.png">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0f0f13;--surface:#18181f;--surface2:#22222c;--border:#2e2e3a;
+    --accent:#7c6af7;--accent2:#4ecdc4;--accent3:#f7a76c;--danger:#f76c6c;
+    --success:#6cf7a4;--text:#e8e8f0;--muted:#7070a0;--paid-bg:#111e16;
+    --safe-top:env(safe-area-inset-top,0px);--safe-bot:env(safe-area-inset-bottom,0px);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html{height:100%}
+  body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;min-height:100%;overflow-x:hidden}
+  body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:.6}
+  header{padding:calc(var(--safe-top) + 1rem) 1.5rem 1rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:rgba(15,15,19,.92);backdrop-filter:blur(12px) saturate(1.4);-webkit-backdrop-filter:blur(12px) saturate(1.4);z-index:100}
+  .logo{font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem;letter-spacing:-.04em;display:flex;align-items:center;gap:.5rem}
+  .logo-ring{width:28px;height:28px;border-radius:8px;object-fit:cover}
+  .tabs{display:flex;gap:.3rem;padding:.6rem 1.2rem 0;position:relative;z-index:1;border-bottom:1px solid var(--border)}
+  .tab{padding:.5rem 1rem;font-size:.72rem;font-family:'DM Mono',monospace;background:transparent;border:none;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;letter-spacing:.04em;text-transform:uppercase}
+  .tab.active{color:var(--text);border-bottom-color:var(--accent)}
+  .sync-indicator{width:7px;height:7px;border-radius:50%;background:var(--success);transition:background .3s;box-shadow:0 0 6px var(--success)}
+  .sync-indicator.syncing{background:var(--accent3);box-shadow:0 0 6px var(--accent3);animation:blink .6s infinite}
+  .sync-indicator.error{background:var(--danger);box-shadow:0 0 6px var(--danger)}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+  .summary{display:grid;grid-template-columns:repeat(2,1fr);gap:.75rem;padding:1.2rem 1.2rem .5rem;position:relative;z-index:1}
+  @media(min-width:600px){.summary{grid-template-columns:repeat(3,1fr)}}
+  @media(min-width:900px){.summary{grid-template-columns:repeat(6,1fr)}}
+  .sum-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1rem 1.1rem;position:relative;overflow:hidden}
+  .sum-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+  .sum-card:nth-child(1)::before{background:var(--accent)}
+  .sum-card:nth-child(2)::before{background:var(--success)}
+  .sum-card:nth-child(3)::before{background:var(--accent3)}
+  .sum-card:nth-child(4)::before{background:var(--accent2)}
+  .sum-card:nth-child(5)::before{background:var(--accent)}
+  .sum-card:nth-child(6)::before{background:var(--danger)}
+  .sum-label{font-size:.6rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:.4rem}
+  .sum-val{font-family:'Syne',sans-serif;font-size:1.35rem;font-weight:700;letter-spacing:-.02em;line-height:1}
+  .sf-bar{padding:.5rem 1.2rem;display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;position:relative;z-index:1;border-bottom:1px solid var(--border);background:var(--bg)}
+  .sf-input{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Mono',monospace;font-size:.75rem;padding:.45rem .75rem;outline:none;transition:border-color .15s;min-width:0}
+  .sf-input:focus{border-color:var(--accent)}
+  .sf-select{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Mono',monospace;font-size:.75rem;padding:.45rem .75rem;outline:none;cursor:pointer;-webkit-appearance:none;appearance:none;min-width:0}
+  .sf-chip{padding:.35rem .7rem;border-radius:8px;font-size:.68rem;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'DM Mono',monospace;transition:all .15s;white-space:nowrap}
+  .sf-chip.active{border-color:var(--accent2);color:var(--accent2);background:rgba(78,205,196,.1)}
+  .sf-label{font-size:.6rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);white-space:nowrap}
+  .sf-sep{width:1px;height:20px;background:var(--border);flex-shrink:0}
+  .sf-sort-btn{padding:.35rem .6rem;border-radius:8px;font-size:.68rem;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'DM Mono',monospace;transition:all .15s;display:flex;align-items:center;gap:.3rem}
+  .sf-sort-btn.active{border-color:var(--accent);color:var(--accent);background:rgba(124,106,247,.1)}
+  .sf-clear{font-size:.68rem;color:var(--danger);background:transparent;border:none;cursor:pointer;padding:.2rem .4rem;border-radius:6px;font-family:'DM Mono',monospace}
+  .add-bar{padding:.75rem 1.2rem;position:relative;z-index:1;display:flex;gap:.6rem;align-items:center}
+  .btn{display:inline-flex;align-items:center;gap:.35rem;padding:.6rem 1.1rem;border-radius:10px;font-family:'DM Mono',monospace;font-size:.78rem;cursor:pointer;border:none;transition:all .15s;font-weight:500;letter-spacing:.02em;white-space:nowrap}
+  .btn-primary{background:var(--accent);color:#fff;box-shadow:0 2px 12px rgba(124,106,247,.3)}
+  .btn-primary:active{transform:scale(.97)}
+  .btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}
+  .btn-ghost:active{background:var(--surface2)}
+  .btn-success{background:var(--success);color:#081a0e}
+  .btn-danger-icon{background:transparent;border:none;color:var(--muted);cursor:pointer;width:32px;height:32px;border-radius:8px;font-size:.9rem;display:flex;align-items:center;justify-content:center;transition:all .15s}
+  .btn-danger-icon:active{color:var(--danger);background:rgba(247,108,108,.1)}
+  .loans-list{padding:.5rem 1.2rem calc(var(--safe-bot) + 5rem);display:flex;flex-direction:column;gap:1rem;position:relative;z-index:1}
+  .loan-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden}
+  .loan-card.archived{opacity:.7}
+  .loan-header{padding:1.1rem 1.2rem;display:flex;align-items:center;gap:.9rem;cursor:pointer;user-select:none;-webkit-user-select:none}
+  .loan-stripe{width:3px;height:42px;border-radius:2px;flex-shrink:0}
+  .loan-info{flex:1;min-width:0}
+  .loan-name{font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .loan-meta{font-size:.67rem;color:var(--muted);margin-top:.18rem}
+  .loan-right{flex-shrink:0;text-align:right}
+  .loan-remaining{font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:700;letter-spacing:-.02em}
+  .loan-total{font-size:.63rem;color:var(--muted);margin-top:.1rem}
+  .loan-prog{height:3px;background:var(--border);margin:0 1.2rem .1rem;border-radius:2px;overflow:hidden}
+  .loan-prog-fill{height:100%;border-radius:2px;transition:width .4s ease}
+  .inst-list{display:none;border-top:1px solid var(--border)}
+  .inst-list.open{display:block}
+  .inst-row{display:flex;align-items:center;padding:.7rem 1.2rem;gap:.5rem;border-bottom:1px solid var(--border);transition:background .1s;position:relative}
+  .inst-row:last-of-type{border-bottom:none}
+  .inst-row.paid{background:var(--paid-bg)}
+  .inst-row.skipped{background:rgba(108,247,164,.04)}
+  .inst-row.overdue::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--danger)}
+  .inst-num{font-size:.62rem;color:var(--muted);width:1.6rem;flex-shrink:0;text-align:center}
+  .inst-row.paid .inst-num{color:var(--success)}
+  .inst-date{font-size:.73rem;width:5rem;flex-shrink:0}
+  .inst-row.overdue .inst-date{color:var(--danger)}
+  .inst-amount{font-size:.8rem;font-weight:500;width:7rem;flex-shrink:0}
+  .inst-note-input{background:transparent;border:none;outline:none;color:var(--muted);font-family:'DM Mono',monospace;font-size:.7rem;width:100%;min-width:0;border-bottom:1px dashed transparent;transition:border-color .15s;flex:1}
+  .inst-note-input:focus{border-color:var(--border);color:var(--text)}
+  .inst-note-input::placeholder{color:var(--border);font-style:italic}
+  .inst-check{width:26px;height:26px;border-radius:8px;border:2px solid var(--border);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s;flex-shrink:0}
+  .inst-check:active{transform:scale(.9)}
+  .inst-check.checked{background:var(--success);border-color:var(--success)}
+  .inst-check.checked::after{content:'✓';color:#081a0e;font-size:.85rem;font-weight:700;line-height:1}
+  .overpay-btn{background:transparent;border:1px solid var(--border);color:var(--accent2);cursor:pointer;border-radius:6px;font-family:'DM Mono',monospace;font-size:.65rem;padding:.2rem .45rem;flex-shrink:0;transition:all .15s}
+  .overpay-btn:active{background:rgba(78,205,196,.1)}
+  .inst-footer{padding:.75rem 1.2rem;background:var(--surface2);display:flex;gap:1rem;flex-wrap:wrap;font-size:.68rem;color:var(--muted);border-top:1px solid var(--border)}
+  .inst-footer strong{color:var(--text)}
+  .inst-header-row{display:flex;align-items:center;padding:.45rem 1.2rem;gap:.5rem;background:var(--surface2);border-bottom:1px solid var(--border);font-size:.6rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+  .chev{transition:transform .2s;flex-shrink:0}
+  .chev.open{transform:rotate(180deg)}
+  .tag{display:inline-block;padding:.12rem .45rem;border-radius:4px;font-size:.6rem;text-transform:uppercase;letter-spacing:.07em;font-weight:500}
+  .tag-next{background:rgba(124,106,247,.15);color:var(--accent)}
+  .tag-overdue{background:rgba(247,108,108,.15);color:var(--danger)}
+  .tag-done{background:rgba(108,247,164,.15);color:var(--success)}
+  .tag-archived{background:rgba(112,112,160,.15);color:var(--muted)}
+  .empty{text-align:center;padding:4rem 2rem;color:var(--muted);display:none}
+  .empty.visible{display:block}
+  .empty-icon{font-size:2.5rem;margin-bottom:1rem;opacity:.3}
+  .empty h3{font-family:'Syne',sans-serif;font-size:1.1rem;color:var(--text);margin-bottom:.4rem}
+  .empty p{font-size:.75rem;line-height:1.7}
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);z-index:200;align-items:flex-end;justify-content:center;padding:0}
+  @media(min-width:600px){.modal-overlay{align-items:center;padding:1rem}}
+  .modal-overlay.open{display:flex}
+  .modal{background:var(--surface);border:1px solid var(--border);border-radius:24px 24px 0 0;padding:1.5rem 1.5rem calc(var(--safe-bot) + 1.5rem);width:100%;max-height:92vh;overflow-y:auto;animation:slideUp .22s cubic-bezier(.16,1,.3,1)}
+  @media(min-width:600px){.modal{border-radius:20px;max-width:520px;padding:2rem}}
+  @keyframes slideUp{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
+  .modal-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 1.2rem}
+  @media(min-width:600px){.modal-handle{display:none}}
+  .modal h2{font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:800;letter-spacing:-.02em;margin-bottom:1.3rem}
+  .form-row{margin-bottom:1rem}
+  .form-row label{display:block;font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:.35rem}
+  .form-row input,.form-row select{width:100%;padding:.72rem .9rem;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'DM Mono',monospace;font-size:.85rem;outline:none;transition:border-color .15s;-webkit-appearance:none;appearance:none}
+  .form-row input:focus,.form-row select:focus{border-color:var(--accent)}
+  .form-row input[type="date"]{color-scheme:dark}
+  .form-row select option{background:var(--surface2)}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:.8rem}
+  .color-picker{display:flex;gap:.5rem;flex-wrap:wrap}
+  .color-opt{width:30px;height:30px;border-radius:8px;cursor:pointer;border:2px solid transparent;transition:all .12s}
+  .color-opt.selected,.color-opt:active{border-color:#fff;transform:scale(1.15)}
+  .modal-actions{display:flex;justify-content:flex-end;gap:.7rem;margin-top:1.3rem}
+  .toast{position:fixed;bottom:calc(var(--safe-bot) + 1rem);left:50%;transform:translateX(-50%) translateY(10px);background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:.6rem 1.2rem;font-size:.75rem;color:var(--text);opacity:0;pointer-events:none;transition:all .2s;z-index:300;white-space:nowrap}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .overpay-badge{display:inline-block;background:rgba(78,205,196,.15);color:var(--accent2);border-radius:4px;font-size:.6rem;padding:.1rem .35rem;margin-left:.3rem}
+  .archive-banner{padding:.8rem 1.2rem;background:rgba(108,247,164,.06);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:.8rem;font-size:.72rem;color:var(--success)}
+  .radio-group{display:flex;gap:.6rem}
+  .radio-opt{flex:1;padding:.6rem .8rem;border:1px solid var(--border);border-radius:10px;cursor:pointer;text-align:center;font-size:.75rem;color:var(--muted);transition:all .15s;user-select:none}
+  .radio-opt.selected{border-color:var(--accent);color:var(--accent);background:rgba(124,106,247,.08)}
+  #f-rate-type-row{display:none}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo"><img src="icon-1024v2.png" class="logo-ring" alt="R">RATY</div>
+  <div style="display:flex;align-items:center;gap:.8rem">
+    <span style="font-size:.65rem;color:var(--muted)" id="sync-label">zsynchronizowano</span>
+    <div class="sync-indicator" id="sync-dot"></div>
+    <button onclick="manualSync()" id="sync-btn" style="background:transparent;border:none;cursor:pointer;color:var(--muted);font-size:1.1rem;padding:.2rem .3rem;border-radius:6px;transition:all .15s;line-height:1" title="Odśwież">↻</button>
+  </div>
+</header>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('active')">Aktywne</button>
+  <button class="tab" onclick="switchTab('archive')">Archiwum</button>
+</div>
+
+<div id="tab-active">
+  <div class="summary">
+    <div class="sum-card"><div class="sum-label">Całkowite zadłużenie</div><div class="sum-val" id="s-debt">—</div></div>
+    <div class="sum-card"><div class="sum-label">Zapłacono łącznie</div><div class="sum-val" id="s-paid">—</div></div>
+    <div class="sum-card"><div class="sum-label">Najbliższa rata</div><div class="sum-val" id="s-next">—</div></div>
+    <div class="sum-card"><div class="sum-label">Rata w tym miesiącu</div><div class="sum-val" id="s-month">—</div></div>
+    <div class="sum-card"><div class="sum-label">Rata w przyszłym miesiącu</div><div class="sum-val" id="s-next-month">—</div></div>
+    <div class="sum-card"><div class="sum-label">Pozostało do spłaty</div><div class="sum-val" id="s-remaining">—</div></div>
+  </div>
+  <div class="add-bar" style="padding-bottom:.4rem">
+    <button class="btn btn-primary" onclick="openAdd()">＋ Dodaj kredyt</button>
+  </div>
+  <div class="sf-bar" id="sf-bar">
+    <span class="sf-label">Sortuj:</span>
+    <button class="sf-sort-btn active" id="sort-default" onclick="setSort('default')" title="Kolejność dodawania">domyślnie</button>
+    <button class="sf-sort-btn" id="sort-next" onclick="setSort('next')" title="Data następnej raty">Data raty</button>
+    <button class="sf-sort-btn" id="sort-amount" onclick="setSort('amount')" title="Kwota kredytu">Kwota</button>
+    <button class="sf-sort-btn" id="sort-monthly" onclick="setSort('monthly')" title="Wysokość raty">Rata</button>
+    <button class="sf-sort-btn" id="sort-progress" onclick="setSort('progress')" title="Postęp spłaty">Postęp</button>
+    <button class="sf-sort-btn" id="sort-remaining" onclick="setSort('remaining')" title="Pozostała kwota">Pozostało</button>
+    <div class="sf-sep"></div>
+    <span class="sf-label">Filtruj:</span>
+    <input class="sf-input" id="filter-name" placeholder="nazwa…" oninput="applyFilters()" style="width:7rem">
+    <select class="sf-select" id="filter-year" onchange="applyFilters()">
+      <option value="">rok płatności</option>
+    </select>
+    <button class="sf-chip" id="filter-overpay" onclick="toggleFilterChip('overpay')" title="Tylko z nadpłatami">z nadpłatami</button>
+    <button class="sf-clear" id="sf-clear-btn" onclick="clearFilters()" style="display:none">✕ wyczyść</button>
+  </div>
+  <div class="loans-list" id="loans-list">
+    <div class="empty" id="empty">
+      <div class="empty-icon">◎</div>
+      <h3>Brak aktywnych kredytów</h3>
+      <p>Dodaj pierwszy harmonogram<br>klikając przycisk powyżej.</p>
+    </div>
+  </div>
+</div>
+
+<div id="tab-archive" style="display:none">
+  <div class="loans-list" id="archive-list" style="padding-top:1rem">
+    <div class="empty visible" id="archive-empty">
+      <div class="empty-icon">◎</div>
+      <h3>Archiwum puste</h3>
+      <p>Spłacone kredyty pojawią się tutaj<br>po archiwizacji.</p>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Modal kredyt -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2 id="modal-title">Nowy kredyt</h2>
+    <div class="form-row"><label>Nazwa kredytu *</label><input id="f-name" type="text" placeholder="np. Samochód, Telewizor…"></div>
+    <div class="form-grid">
+      <div class="form-row"><label>Kwota całkowita (zł) *</label><input id="f-amount" type="number" inputmode="decimal" placeholder="15000"></div>
+      <div class="form-row"><label>Liczba rat *</label><input id="f-count" type="number" inputmode="numeric" placeholder="24" min="1"></div>
+    </div>
+    <div class="form-grid">
+      <div class="form-row"><label>Data 1. raty *</label><input id="f-start" type="date"></div>
+      <div class="form-row"><label>Dzień płatności (każdy miesiąc)</label><input id="f-day" type="number" inputmode="numeric" placeholder="np. 15" min="1" max="31"></div>
+    </div>
+    <div class="form-grid">
+      <div class="form-row"><label>Oprocentowanie roczne (%)</label><input id="f-rate" type="number" inputmode="decimal" placeholder="0" step="0.01" oninput="onRateInput()"></div>
+      <div class="form-row"><label>Rata miesięczna (zł)</label><input id="f-monthly" type="number" inputmode="decimal" placeholder="auto"></div>
+    </div>
+    <div class="form-row" id="f-rate-type-row">
+      <label>Typ rat</label>
+      <div class="radio-group">
+        <div class="radio-opt selected" id="rt-equal" onclick="selectRateType('equal')">Równe (annuitetowe)</div>
+        <div class="radio-opt" id="rt-decreasing" onclick="selectRateType('decreasing')">Malejące</div>
+      </div>
+    </div>
+    <div class="form-row"><label>Kolor</label><div class="color-picker" id="color-picker"></div></div>
+    <div class="form-row"><label>Notatka (opcjonalnie)</label><input id="f-note" type="text" placeholder="np. Bank PKO, numer umowy…"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Anuluj</button>
+      <button class="btn btn-primary" onclick="saveLoan()">Zapisz</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal nadpłata -->
+<div class="modal-overlay" id="overpay-overlay">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-handle"></div>
+    <h2>Nadpłata</h2>
+    <div class="form-row"><label>Kwota nadpłaty (zł)</label><input id="op-amount" type="number" inputmode="decimal" placeholder="np. 500" oninput="previewOverpay()"></div>
+    <div class="form-row"><label>Data nadpłaty</label><input id="op-date" type="date"></div>
+    <div class="form-row"><label>Notatka</label><input id="op-note" type="text" placeholder="np. premia, zwrot podatku…"></div>
+    <div class="form-row">
+      <label>Efekt nadpłaty</label>
+      <div class="radio-group">
+        <div class="radio-opt selected" id="op-type-shorten" onclick="selectOpType('shorten')">Skróć kredyt</div>
+        <div class="radio-opt" id="op-type-reduce" onclick="selectOpType('reduce')">Zmniejsz ratę</div>
+      </div>
+    </div>
+    <div id="op-preview" style="background:var(--surface2);border-radius:10px;padding:.8rem 1rem;font-size:.72rem;color:var(--muted);margin-top:.5rem;display:none"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeOverpay()">Anuluj</button>
+      <button class="btn btn-primary" onclick="confirmOverpay()">Zatwierdź</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal rata wyrównawcza -->
+<div class="modal-overlay" id="balance-overlay">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-handle"></div>
+    <h2>Rata wyrównawcza</h2>
+    <p style="font-size:.78rem;line-height:1.6;color:var(--muted);margin-bottom:1.2rem">Kwota nie dzieli się równo (reszta <strong id="balance-remainder" style="color:var(--text)">0,00 zł</strong>). Która rata ma przyjąć resztę i być wyrównawcza?</p>
+    <div class="modal-actions" style="justify-content:stretch;gap:.7rem">
+      <button class="btn btn-ghost" style="flex:1" onclick="pickBalanceInst('first')">Pierwsza</button>
+      <button class="btn btn-primary" style="flex:1" onclick="pickBalanceInst('last')">Ostatnia</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const COLORS = ['#7c6af7','#4ecdc4','#f7a76c','#f76c6c','#6cf7a4','#f76cf0','#6cb4f7','#f7e76c','#b07850','#a86cf7'];
+let selectedColor = COLORS[0];
+let loans = [];
+let archivedLoans = [];
+let editingId = null;
+let saveTimer = null;
+let overpayLoanId = null;
+let overpayInstIdx = null;
+let overpayType = 'shorten'; // 'shorten' | 'reduce'
+let rateType = 'equal'; // 'equal' | 'decreasing'
+let currentTab = 'active';
+let dataLoaded = false;
+
+// ── API ──────────────────────────────────────────────────
+async function apiGet() {
+  const r = await fetch('/api/loans');
+  if (!r.ok) throw new Error('fetch failed');
+  return r.json();
+}
+async function apiPost(path, data) {
+  const r = await fetch(path, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+  if (!r.ok) throw new Error('save failed');
+  return r.json();
+}
+function setSyncState(state) {
+  const dot = document.getElementById('sync-dot');
+  const lbl = document.getElementById('sync-label');
+  dot.className = 'sync-indicator'+(state==='sync'?' syncing':state==='error'?' error':'');
+  lbl.textContent = state==='sync'?'zapisywanie…':state==='error'?'błąd zapisu':'zsynchronizowano';
+}
+function scheduleSave() {
+  if (!dataLoaded) { setSyncState('error'); showToast('⚠ Dane nie załadowane — zapis zablokowany'); return; }
+  clearTimeout(saveTimer); setSyncState('sync');
+  saveTimer = setTimeout(async () => {
+    try { await apiPost('/api/loans', {loans}); setSyncState('ok'); }
+    catch(e) { setSyncState('error'); showToast('⚠ Nie udało się zapisać'); }
+  }, 600);
+}
+
+// ── Init ─────────────────────────────────────────────────
+async function init() {
+  buildColorPicker(); setDefaultDate(); setSyncState('sync');
+  try {
+    const d = await apiGet();
+    if (!Array.isArray(d.loans)) throw new Error('bad response');
+    loans = d.loans||[];
+    archivedLoans = d.archivedLoans||[];
+    dataLoaded = true;
+    setSyncState('ok');
+  } catch(e) { setSyncState('error'); showToast('⚠ Brak połączenia z serwerem'); }
+  render(); updateSummary();
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});
+}
+
+// ── Tabs ─────────────────────────────────────────────────
+function switchTab(tab) {
+  currentTab = tab;
+  document.getElementById('tab-active').style.display = tab==='active'?'':'none';
+  document.getElementById('tab-archive').style.display = tab==='archive'?'':'none';
+  document.querySelectorAll('.tab').forEach((el,i) => el.classList.toggle('active', (i===0&&tab==='active')||(i===1&&tab==='archive')));
+  if (tab==='archive') renderArchive();
+}
+
+// ── Color picker ─────────────────────────────────────────
+function buildColorPicker() {
+  const cp = document.getElementById('color-picker');
+  COLORS.forEach((c,i) => {
+    const d = document.createElement('div');
+    d.className = 'color-opt'+(i===0?' selected':'');
+    d.style.background = c;
+    d.onclick = () => { selectedColor=c; cp.querySelectorAll('.color-opt').forEach(x=>x.classList.remove('selected')); d.classList.add('selected'); };
+    cp.appendChild(d);
+  });
+}
+function setDefaultDate() {
+  const t=new Date(), pad=n=>String(n).padStart(2,'0');
+  const v = `${t.getFullYear()}-${pad(t.getMonth()+1)}-${pad(t.getDate())}`;
+  document.getElementById('f-start').value = v;
+  document.getElementById('f-day').value = t.getDate();
+  document.getElementById('op-date').value = v;
+}
+
+// ── Rate type ─────────────────────────────────────────────
+function onRateInput() {
+  const rate = parseFloat(document.getElementById('f-rate').value)||0;
+  document.getElementById('f-rate-type-row').style.display = rate>0 ? '' : 'none';
+  calcMonthly();
+}
+function selectRateType(type) {
+  rateType = type;
+  document.getElementById('rt-equal').classList.toggle('selected', type==='equal');
+  document.getElementById('rt-decreasing').classList.toggle('selected', type==='decreasing');
+  calcMonthly();
+}
+function calcMonthly() {
+  const amt=parseFloat(document.getElementById('f-amount').value);
+  const cnt=parseInt(document.getElementById('f-count').value);
+  const rate=parseFloat(document.getElementById('f-rate').value)||0;
+  if (!amt||!cnt) return;
+  let m;
+  if (rate>0 && rateType==='equal') {
+    const mr=rate/100/12;
+    m = amt*mr*Math.pow(1+mr,cnt)/(Math.pow(1+mr,cnt)-1);
+  } else if (rate>0 && rateType==='decreasing') {
+    m = amt/cnt; // pierwsza rata (najwyższa)
+  } else {
+    m = amt/cnt;
+  }
+  document.getElementById('f-monthly').value = m.toFixed(2);
+}
+['f-amount','f-count'].forEach(id => document.getElementById(id).addEventListener('input', calcMonthly));
+
+// ── Overpay type ─────────────────────────────────────────
+function selectOpType(type) {
+  overpayType = type;
+  document.getElementById('op-type-shorten').classList.toggle('selected', type==='shorten');
+  document.getElementById('op-type-reduce').classList.toggle('selected', type==='reduce');
+  previewOverpay();
+}
+
+// ── Modal kredyt ─────────────────────────────────────────
+function openAdd() {
+  editingId=null; rateType='equal';
+  document.getElementById('modal-title').textContent = 'Nowy kredyt';
+  ['f-name','f-amount','f-count','f-monthly','f-rate','f-note'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-rate-type-row').style.display='none';
+  selectRateType('equal');
+  setDefaultDate();
+  selectedColor=COLORS[0];
+  document.querySelectorAll('.color-opt').forEach((el,i)=>el.classList.toggle('selected',i===0));
+  document.getElementById('modal-overlay').classList.add('open');
+  setTimeout(()=>document.getElementById('f-name').focus(),100);
+}
+function openEdit(id) {
+  const loan=loans.find(l=>l.id===id); if(!loan) return;
+  editingId=id; rateType=loan.rateType||'equal';
+  document.getElementById('modal-title').textContent='Edytuj kredyt';
+  document.getElementById('f-name').value=loan.name;
+  document.getElementById('f-amount').value=loan.totalAmount;
+  document.getElementById('f-count').value=loan.schedule.length;
+  document.getElementById('f-monthly').value=loan.schedule[0]?.total||'';
+  document.getElementById('f-rate').value=loan.rate||'';
+  document.getElementById('f-start').value=loan.schedule[0]?.date||'';
+  document.getElementById('f-day').value=loan.payDay||1;
+  document.getElementById('f-note').value=loan.note||'';
+  document.getElementById('f-rate-type-row').style.display=(loan.rate>0)?'':'none';
+  selectRateType(rateType);
+  selectedColor=loan.color;
+  document.querySelectorAll('.color-opt').forEach(el=>el.classList.toggle('selected',rgbToHex(el.style.background)===loan.color||el.style.background===loan.color));
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+function rgbToHex(rgb) { const m=rgb.match(/\d+/g); if(!m||m.length<3) return rgb; return '#'+m.slice(0,3).map(n=>parseInt(n).toString(16).padStart(2,'0')).join(''); }
+
+// ── Modal nadpłata ────────────────────────────────────────
+function openOverpayment(loanId, instIdx) {
+  overpayLoanId=loanId; overpayInstIdx=instIdx; overpayType='shorten';
+  document.getElementById('op-amount').value='';
+  document.getElementById('op-note').value='';
+  selectOpType('shorten');
+  const t=new Date(), pad=n=>String(n).padStart(2,'0');
+  document.getElementById('op-date').value=`${t.getFullYear()}-${pad(t.getMonth()+1)}-${pad(t.getDate())}`;
+  document.getElementById('op-preview').style.display='none';
+  document.getElementById('overpay-overlay').classList.add('open');
+  setTimeout(()=>document.getElementById('op-amount').focus(),100);
+}
+function closeOverpay() { document.getElementById('overpay-overlay').classList.remove('open'); }
+
+function previewOverpay() {
+  const amt=parseFloat(document.getElementById('op-amount').value);
+  const loan=loans.find(l=>l.id===overpayLoanId);
+  const prev=document.getElementById('op-preview');
+  if (!amt||!loan) { prev.style.display='none'; return; }
+  prev.style.display='block';
+  if (overpayType==='shorten') {
+    const unpaidFromEnd=[...loan.schedule].reverse().filter(i=>!i.paid&&!i.skipped);
+    let remaining=amt, skipped=0;
+    for (const inst of unpaidFromEnd) {
+      if (remaining<=0) break;
+      if (remaining>=inst.total) { remaining-=inst.total; skipped++; } else { skipped++; break; }
+    }
+    prev.innerHTML=`Skróci kredyt o <strong style="color:var(--accent2)">${skipped} ${skipped===1?'ratę':skipped<5?'raty':'rat'}</strong>`;
+  } else {
+    const unpaid=loan.schedule.filter(i=>!i.paid&&!i.skipped);
+    if (!unpaid.length) { prev.innerHTML='Brak niezapłaconych rat'; return; }
+    const newMonthly=((unpaid.reduce((s,i)=>s+i.total,0)-amt)/unpaid.length);
+    prev.innerHTML=newMonthly>0
+      ? `Nowa rata: <strong style="color:var(--accent2)">${fmt(newMonthly)}</strong>`
+      : `<span style="color:var(--danger)">Kwota większa niż pozostałe saldo</span>`;
+  }
+}
+
+function confirmOverpay() {
+  const amt=parseFloat(document.getElementById('op-amount').value);
+  const date=document.getElementById('op-date').value;
+  const note=document.getElementById('op-note').value.trim();
+  if (!amt||amt<=0) { showToast('Podaj kwotę nadpłaty'); return; }
+  const loan=loans.find(l=>l.id===overpayLoanId); if(!loan) return;
+
+  if (overpayType==='reduce') {
+    const unpaid=loan.schedule.filter(i=>!i.paid&&!i.skipped);
+    const newTotalAmt=Math.max(0,unpaid.reduce((s,i)=>s+i.total,0)-amt);
+    if (unpaid.length && hasRemainder(newTotalAmt, unpaid.length)) {
+      const base=Math.floor(Math.round(newTotalAmt*100)/unpaid.length)/100;
+      askBalanceInst(Math.abs(newTotalAmt-base*unpaid.length), loan.balanceInst||'last', (bi)=>applyOverpay(amt,date,note,bi));
+      return;
+    }
+  }
+  applyOverpay(amt,date,note,loan.balanceInst||'last');
+}
+function applyOverpay(amt,date,note,balanceInst) {
+  const loan=loans.find(l=>l.id===overpayLoanId); if(!loan) return;
+  const inst=loan.schedule[overpayInstIdx];
+  inst.overpayment=(inst.overpayment||0)+amt;
+  if (!loan.overpayments) loan.overpayments=[];
+  loan.overpayments.push({date,amount:amt,note,instNum:inst.num,type:overpayType});
+
+  if (overpayType==='shorten') {
+    let remaining=amt;
+    const unpaid=loan.schedule.filter(i=>!i.paid&&!i.skipped).reverse();
+    for (const s of unpaid) {
+      if (remaining<=0) break;
+      if (remaining>=s.total) { remaining-=s.total; s.skipped=true; }
+      else { s.total=+(s.total-remaining).toFixed(2); s.principal=+(s.principal-remaining).toFixed(2); remaining=0; }
+    }
+    showToast(`✓ Nadpłata ${fmt(amt)} — harmonogram skrócony`);
+  } else {
+    // Opcja B: zmniejsz ratę
+    const unpaid=loan.schedule.filter(i=>!i.paid&&!i.skipped);
+    const newTotalAmt=Math.max(0,unpaid.reduce((s,i)=>s+i.total,0)-amt);
+    const split=splitEqual(newTotalAmt, unpaid.length, balanceInst);
+    unpaid.forEach((s,i)=>{ s.total=split[i]; s.principal=split[i]; s.interest=0; });
+    const per=unpaid.length?newTotalAmt/unpaid.length:0;
+    showToast(`✓ Nadpłata ${fmt(amt)} — rata zmniejszona do ${fmt(per)}`);
+  }
+
+  closeOverpay(); render(); updateSummary(); scheduleSave();
+}
+
+// ── Delete overpayment ────────────────────────────────────
+function deleteOverpayment(loanId, ovpIdx) {
+  if (!confirm('Usunąć tę nadpłatę? Harmonogram wróci do poprzedniego stanu.')) return;
+  const loan=loans.find(l=>l.id===loanId); if(!loan) return;
+  if (!loan.overpayments[ovpIdx]) return;
+
+  // Resetuj harmonogram do oryginału
+  const origSplit=splitEqual(loan.totalAmount, loan.schedule.length, loan.balanceInst||'last');
+  loan.schedule.forEach((inst,i)=>{
+    inst.skipped=false; inst.total=origSplit[i]; inst.principal=origSplit[i]; inst.interest=0; inst.overpayment=0;
+  });
+  loan.overpayments.splice(ovpIdx,1);
+
+  // Przelicz ponownie pozostałe nadpłaty
+  loan.overpayments.forEach(o=>{
+    const inst=loan.schedule.find(i=>i.num===o.instNum);
+    if (inst) inst.overpayment=(inst.overpayment||0)+o.amount;
+    if (o.type==='shorten'||!o.type) {
+      let remaining=o.amount;
+      const unpaid=loan.schedule.filter(i=>!i.paid&&!i.skipped).reverse();
+      for (const s of unpaid) {
+        if (remaining<=0) break;
+        if (remaining>=s.total) { remaining-=s.total; s.skipped=true; }
+        else { s.total=+(s.total-remaining).toFixed(2); s.principal=+(s.principal-remaining).toFixed(2); remaining=0; }
+      }
+    } else {
+      const unpaid=loan.schedule.filter(i=>!i.paid&&!i.skipped);
+      const newTotalAmt=Math.max(0,unpaid.reduce((s,i)=>s+i.total,0)-o.amount);
+      const split=splitEqual(newTotalAmt, unpaid.length, loan.balanceInst||'last');
+      unpaid.forEach((s,i)=>{ s.total=split[i]; s.principal=split[i]; s.interest=0; });
+    }
+  });
+
+  render(); updateSummary(); scheduleSave();
+  showToast('Nadpłata usunięta');
+}
+
+// ── Archive ───────────────────────────────────────────────
+async function archiveLoan(id) {
+  if (!dataLoaded) { showToast('⚠ Dane nie załadowane — zapis zablokowany'); return; }
+  const idx=loans.findIndex(l=>l.id===id); if(idx<0) return;
+  const loan=loans[idx];
+  loan.archivedAt=new Date().toISOString().slice(0,10);
+  try {
+    await apiPost('/api/archive', {loan});
+    loans.splice(idx,1);
+    archivedLoans.push(loan);
+    render(); updateSummary();
+    showToast(`✓ "${loan.name}" przeniesiony do archiwum`);
+  } catch(e) {
+    delete loan.archivedAt;
+    showToast('⚠ Nie udało się zarchiwizować');
+  }
+}
+async function unarchiveLoan(id) {
+  if (!dataLoaded) { showToast('⚠ Dane nie załadowane — zapis zablokowany'); return; }
+  const idx=archivedLoans.findIndex(l=>l.id===id); if(idx<0) return;
+  const loan=archivedLoans[idx];
+  try {
+    await apiPost('/api/unarchive', {id});
+    delete loan.archivedAt;
+    archivedLoans.splice(idx,1);
+    loans.push(loan);
+    renderArchive(); updateSummary();
+    showToast(`✓ "${loan.name}" przywrócony`);
+  } catch(e) {
+    showToast('⚠ Nie udało się przywrócić');
+  }
+}
+
+// ── Równy podział z ratą wyrównawczą ──────────────────────
+// Zwraca tablicę kwot rat o sumie DOKŁADNIE równej total (liczone w groszach).
+// Resztę z zaokrąglenia przyjmuje pierwsza lub ostatnia rata (balanceInst).
+function splitEqual(total, count, balanceInst, perOverride) {
+  const totalCents = Math.round(total*100);
+  const base = (perOverride!=null) ? Math.round(perOverride*100) : Math.floor(totalCents/count);
+  const remainder = totalCents - base*count;
+  const arr = new Array(count).fill(base/100);
+  const idx = (balanceInst==='first') ? 0 : count-1;
+  arr[idx] = (base+remainder)/100;
+  return arr;
+}
+function hasRemainder(total, count, perOverride) {
+  const totalCents = Math.round(total*100);
+  if (perOverride!=null) return Math.round(perOverride*100)*count !== totalCents;
+  return totalCents % count !== 0;
+}
+let balanceResolve=null;
+function askBalanceInst(remainderZl, defaultInst, cb){
+  balanceResolve=cb;
+  document.getElementById('balance-remainder').textContent = fmt(remainderZl);
+  document.getElementById('balance-overlay').classList.add('open');
+}
+function pickBalanceInst(inst){
+  document.getElementById('balance-overlay').classList.remove('open');
+  const cb=balanceResolve; balanceResolve=null; if(cb) cb(inst);
+}
+
+// ── Schedule generation ───────────────────────────────────
+function genSchedule(totalAmount, count, startDate, payDay, monthlyOverride, rate, rType, balanceInst) {
+  const sched=[];
+  const annualRate=parseFloat(rate)||0;
+  let balance=parseFloat(totalAmount);
+  const equalSplit = (annualRate>0) ? null : splitEqual(totalAmount, count, balanceInst||'last', monthlyOverride||null);
+  for (let i=0; i<count; i++) {
+    const d=new Date(startDate+'T12:00:00');
+    d.setMonth(d.getMonth()+i);
+    const maxDay=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();
+    d.setDate(Math.min(payDay,maxDay));
+    const dateStr=d.toISOString().slice(0,10);
+    let principal, interest, total;
+    if (annualRate>0 && rType==='equal') {
+      const mr=annualRate/100/12;
+      total=balance*mr*Math.pow(1+mr,count-i)/(Math.pow(1+mr,count-i)-1);
+      interest=balance*mr; principal=total-interest;
+      balance=Math.max(0,balance-principal);
+    } else if (annualRate>0 && rType==='decreasing') {
+      principal=totalAmount/count;
+      interest=balance*(annualRate/100/12);
+      total=principal+interest;
+      balance=Math.max(0,balance-principal);
+    } else {
+      total=equalSplit[i]; principal=equalSplit[i]; interest=0;
+    }
+    sched.push({num:i+1,date:dateStr,principal:+principal.toFixed(2),interest:+interest.toFixed(2),total:+total.toFixed(2),paid:false,note:''});
+  }
+  return sched;
+}
+
+// ── Save loan ─────────────────────────────────────────────
+function saveLoan() {
+  const name=document.getElementById('f-name').value.trim();
+  const amount=parseFloat(document.getElementById('f-amount').value);
+  const count=parseInt(document.getElementById('f-count').value);
+  const start=document.getElementById('f-start').value;
+  const payDay=parseInt(document.getElementById('f-day').value)||1;
+  const monthly=parseFloat(document.getElementById('f-monthly').value)||null;
+  const rate=parseFloat(document.getElementById('f-rate').value)||0;
+  const note=document.getElementById('f-note').value.trim();
+  if (!name||!amount||!count||!start) { showToast('Wypełnij wymagane pola (*)'); return; }
+  const finish=(balanceInst)=>doSaveLoan(name,amount,count,start,payDay,monthly,rate,note,balanceInst);
+  if (rate===0 && hasRemainder(amount,count,monthly)) {
+    const editLoan = editingId ? loans.find(l=>l.id===editingId) : null;
+    const def = (editLoan && editLoan.balanceInst) || 'last';
+    const base = monthly!=null ? monthly : Math.floor(Math.round(amount*100)/count)/100;
+    const rem = amount - base*count;
+    askBalanceInst(Math.abs(rem), def, finish);
+  } else {
+    finish('last');
+  }
+}
+function doSaveLoan(name,amount,count,start,payDay,monthly,rate,note,balanceInst) {
+  const sched=genSchedule(amount,count,start,payDay,monthly,rate,rateType,balanceInst);
+  if (editingId) {
+    const idx=loans.findIndex(l=>l.id===editingId);
+    if (idx>-1) {
+      const old=loans[idx].schedule;
+      sched.forEach((inst,i)=>{ if(old[i]){inst.paid=old[i].paid;inst.note=old[i].note||'';inst.skipped=old[i].skipped||false;inst.overpayment=old[i].overpayment||0;} });
+      loans[idx]={...loans[idx],name,totalAmount:amount,rate,rateType,payDay,note,color:selectedColor,schedule:sched,balanceInst};
+    }
+  } else {
+    loans.push({id:Date.now().toString(),name,totalAmount:amount,rate,rateType,payDay,note,color:selectedColor,schedule:sched,balanceInst,overpayments:[]});
+  }
+  closeModal(); render(); updateSummary(); scheduleSave();
+}
+
+// ── Actions ───────────────────────────────────────────────
+function togglePaid(loanId, idx) {
+  const loan=loans.find(l=>l.id===loanId); if(!loan) return;
+  loan.schedule[idx].paid=!loan.schedule[idx].paid;
+  render(); updateSummary(); scheduleSave();
+}
+function updateNote(loanId, idx, val) {
+  const loan=loans.find(l=>l.id===loanId); if(!loan) return;
+  loan.schedule[idx].note=val; scheduleSave();
+}
+function deleteLoan(id) {
+  if (!confirm('Usunąć ten kredyt? Operacji nie można cofnąć.')) return;
+  loans=loans.filter(l=>l.id!==id); render(); updateSummary(); scheduleSave();
+}
+function toggleInst(id) {
+  document.getElementById('il-'+id).classList.toggle('open');
+  document.getElementById('ch-'+id).classList.toggle('open');
+}
+
+// ── Formatting ────────────────────────────────────────────
+function fmt(n) { return new Intl.NumberFormat('pl-PL',{minimumFractionDigits:2,maximumFractionDigits:2}).format(n)+' zł'; }
+function fmtD(s) { if(!s) return '—'; const [y,m,d]=s.split('-'); return `${d}.${m}.${y}`; }
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ── Build loan card HTML ──────────────────────────────────
+function buildLoanCard(loan, isArchived) {
+  const today=new Date().toISOString().slice(0,10);
+  const activeSched=loan.schedule.filter(i=>!i.skipped);
+  const paid=loan.schedule.filter(i=>i.paid).reduce((s,i)=>s+i.total,0)
+           +(loan.overpayments||[]).reduce((s,o)=>s+o.amount,0);
+  const paidCount=activeSched.filter(i=>i.paid).length;
+  const activeCount=activeSched.length;
+  const pct=loan.totalAmount>0?paid/loan.totalAmount*100:0;
+  const remaining=Math.max(0,loan.totalAmount-paid);
+  const nextInst=loan.schedule.find(i=>!i.paid&&!i.skipped);
+  const allDone=remaining<0.01;
+  const ovpCount=(loan.overpayments||[]).length;
+
+  let tagHtml='';
+  if (isArchived) tagHtml='<span class="tag tag-archived">Archiwum</span>';
+  else if (allDone) tagHtml='<span class="tag tag-done">Spłacony ✓</span>';
+  else if (nextInst&&nextInst.date<today) tagHtml=`<span class="tag tag-overdue">Zaległa ${fmtD(nextInst.date)}</span>`;
+  else if (nextInst) tagHtml=`<span class="tag tag-next">${fmtD(nextInst.date)}</span>`;
+
+  const rateTypeLabel=loan.rateType==='decreasing'?' · malejące':'';
+
+  const archiveBanner = !isArchived && allDone ? `
+    <div class="archive-banner">
+      <span>✓ Wszystkie raty zapłacone</span>
+      <button class="btn btn-success" style="padding:.4rem .9rem;font-size:.72rem" onclick="event.stopPropagation();archiveLoan('${loan.id}')">Archiwizuj</button>
+    </div>` : '';
+
+  const actionBtns = isArchived
+    ? `<button class="btn-danger-icon" onclick="event.stopPropagation();unarchiveLoan('${loan.id}')" title="Przywróć">↩</button>`
+    : `<button class="btn-danger-icon" onclick="event.stopPropagation();openEdit('${loan.id}')" title="Edytuj">✎</button>
+       <button class="btn-danger-icon" onclick="event.stopPropagation();deleteLoan('${loan.id}')" title="Usuń">✕</button>`;
+
+  const instRows=loan.schedule.map((inst,idx)=>{
+    const over=!inst.paid&&!inst.skipped&&inst.date<today;
+    const hasOvp=inst.overpayment>0;
+    const checkClick=isArchived?'':'event.stopPropagation();togglePaid(\''+loan.id+'\','+idx+')';
+    return `<div class="inst-row ${inst.paid?'paid':''} ${inst.skipped?'skipped':''} ${over?'overdue':''}">
+      <span class="inst-num">${inst.num}</span>
+      <span class="inst-date" style="${inst.skipped?'opacity:.35':''}">
+        ${fmtD(inst.date)}
+        ${inst.skipped?'<span style="font-size:.55rem;color:var(--success);display:block">skrócona</span>':''}
+      </span>
+      <span class="inst-amount" style="${inst.skipped?'opacity:.35;text-decoration:line-through':''}">
+        ${fmt(inst.total)}
+        ${inst.interest>0?`<span style="font-size:.6rem;color:var(--muted);display:block">${fmt(inst.principal)}+${fmt(inst.interest)}</span>`:''}
+        ${hasOvp?`<span style="color:var(--accent2);font-size:.6rem;display:block">nadpł. ${fmt(inst.overpayment)}</span>`:''}
+      </span>
+      <input class="inst-note-input" value="${esc(inst.note||'')}" placeholder="notatka…"
+        onchange="updateNote('${loan.id}',${idx},this.value)" onclick="event.stopPropagation()">
+      <span style="width:38px;text-align:center">
+        ${!inst.skipped&&!isArchived?`<button class="overpay-btn" onclick="event.stopPropagation();openOverpayment('${loan.id}',${idx})" title="Nadpłata">+zł</button>`:''}
+      </span>
+      <div class="inst-check ${inst.paid||inst.skipped?'checked':''}"
+        style="${inst.skipped||isArchived?'opacity:.35;pointer-events:none':''}"
+        onclick="${checkClick}"></div>
+    </div>`;
+  }).join('');
+
+  const ovpHistory=ovpCount?`
+    <div style="padding:.6rem 1.2rem;background:rgba(78,205,196,.05);border-top:1px solid var(--border);font-size:.68rem;color:var(--muted)">
+      <strong style="color:var(--accent2)">Historia nadpłat:</strong>
+      ${(loan.overpayments||[]).map((o,oi)=>`<span style="display:inline-flex;align-items:center;gap:.3rem;margin:.15rem .2rem;background:rgba(78,205,196,.08);border-radius:6px;padding:.2rem .5rem">
+        ${fmtD(o.date)}: ${fmt(o.amount)}${o.type==='reduce'?' (↓rata)':' (↓okres)'}${o.note?' ('+esc(o.note)+')':''}
+        ${!isArchived?`<button onclick="event.stopPropagation();deleteOverpayment('${loan.id}',${oi})" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:.8rem;padding:0 .1rem;line-height:1" title="Usuń">✕</button>`:''}
+      </span>`).join('')}
+    </div>`:'' ;
+
+  return `
+    ${archiveBanner}
+    <div class="loan-header" onclick="toggleInst('${loan.id}')">
+      <div class="loan-stripe" style="background:${loan.color}"></div>
+      <div class="loan-info">
+        <div class="loan-name">${esc(loan.name)}</div>
+        <div class="loan-meta">${paidCount}/${activeCount} rat${rateTypeLabel} &nbsp;${tagHtml}${ovpCount?` <span class="overpay-badge">+${ovpCount} nadpł.</span>`:''}</div>
+      </div>
+      <div class="loan-right">
+        <div class="loan-remaining">${fmt(remaining)}</div>
+        <div class="loan-total">z ${fmt(loan.totalAmount)}</div>
+      </div>
+      <div onclick="event.stopPropagation()" style="display:flex;gap:.3rem">${actionBtns}</div>
+      <svg id="ch-${loan.id}" class="chev" width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M4 6l4 4 4-4" stroke="#7070a0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="loan-prog"><div class="loan-prog-fill" style="width:${Math.min(100,pct).toFixed(1)}%;background:${loan.color}"></div></div>
+    <div class="inst-list" id="il-${loan.id}">
+      <div class="inst-header-row">
+        <span style="width:1.6rem;text-align:center">#</span>
+        <span style="width:5rem">Data</span>
+        <span style="width:7rem">Rata</span>
+        <span style="flex:1">Notatka</span>
+        <span style="width:38px;text-align:center">Nadpł.</span>
+        <span style="width:26px"></span>
+      </div>
+      ${instRows}
+      ${ovpHistory}
+      <div class="inst-footer">
+        <span>Kapitał: <strong>${fmt(loan.totalAmount)}</strong></span>
+        <span>Zapłacono: <strong style="color:var(--success)">${fmt(paid)}</strong></span>
+        <span>Pozostało: <strong style="color:var(--accent3)">${fmt(remaining)}</strong></span>
+        ${loan.archivedAt?`<span>Archiwizowano: <strong>${fmtD(loan.archivedAt)}</strong></span>`:''}
+      </div>
+    </div>`;
+}
+
+// ── Sort & Filter state ───────────────────────────────────
+let sortKey = 'default'; // default|next|amount|monthly|progress|remaining
+let sortDir = 1; // 1=asc, -1=desc
+let filterName = '';
+let filterYear = '';
+let filterOverpay = false;
+
+function setSort(key) {
+  // Reset arrow on previously active button
+  const prevBtn=document.getElementById('sort-'+sortKey);
+  if (prevBtn) prevBtn.textContent=prevBtn.textContent.replace(/ [▲▼]/,'');
+
+  if (key==='default') {
+    sortKey='default'; sortDir=1;
+    document.querySelectorAll('.sf-sort-btn').forEach(b=>b.classList.remove('active'));
+    document.getElementById('sort-default').classList.add('active');
+    render(); return;
+  }
+  if (sortKey===key) sortDir*=-1; else { sortKey=key; sortDir=1; }
+  document.querySelectorAll('.sf-sort-btn').forEach(b=>b.classList.remove('active'));
+  const btn=document.getElementById('sort-'+key);
+  if (btn) { btn.classList.add('active'); btn.textContent=btn.textContent.replace(/ [▲▼]/,'')+(sortDir===1?' ▲':' ▼'); }
+  render();
+}
+function applyFilters() {
+  filterName=document.getElementById('filter-name').value.trim().toLowerCase();
+  filterYear=document.getElementById('filter-year').value;
+  updateClearBtn(); render();
+}
+function toggleFilterChip(chip) {
+  if (chip==='overpay') {
+    filterOverpay=!filterOverpay;
+    document.getElementById('filter-overpay').classList.toggle('active',filterOverpay);
+  }
+  updateClearBtn(); render();
+}
+function clearFilters() {
+  filterName=''; filterYear=''; filterOverpay=false;
+  document.getElementById('filter-name').value='';
+  document.getElementById('filter-year').value='';
+  document.getElementById('filter-overpay').classList.remove('active');
+  updateClearBtn(); render();
+}
+function updateClearBtn() {
+  const active=filterName||filterYear||filterOverpay;
+  document.getElementById('sf-clear-btn').style.display=active?'':'none';
+}
+function populateYears() {
+  const years=new Set();
+  loans.forEach(loan=>loan.schedule.forEach(inst=>{ if(!inst.paid&&!inst.skipped) years.add(inst.date.slice(0,4)); }));
+  const sel=document.getElementById('filter-year');
+  const cur=sel.value;
+  while(sel.options.length>1) sel.remove(1);
+  [...years].sort().forEach(y=>{ const o=document.createElement('option'); o.value=y; o.textContent=y; sel.appendChild(o); });
+  if (cur) sel.value=cur;
+}
+function getLoanSortVal(loan) {
+  const paid=loan.schedule.filter(i=>i.paid).reduce((s,i)=>s+i.total,0)+(loan.overpayments||[]).reduce((s,o)=>s+o.amount,0);
+  const remaining=Math.max(0,loan.totalAmount-paid);
+  const next=loan.schedule.find(i=>!i.paid&&!i.skipped);
+  const progress=loan.totalAmount>0?paid/loan.totalAmount:0;
+  const monthly=next?next.total:0;
+  const idx=loans.indexOf(loan);
+  switch(sortKey) {
+    case 'next': return next?next.date:'9999-99-99';
+    case 'amount': return loan.totalAmount;
+    case 'monthly': return monthly;
+    case 'progress': return progress;
+    case 'remaining': return remaining;
+    case 'default': return idx;
+    default: return idx;
+  }
+}
+function filterLoan(loan) {
+  if (filterName && !loan.name.toLowerCase().includes(filterName)) return false;
+  if (filterYear && !loan.schedule.some(i=>!i.paid&&!i.skipped&&i.date.startsWith(filterYear))) return false;
+  if (filterOverpay && !(loan.overpayments&&loan.overpayments.length>0)) return false;
+  return true;
+}
+
+// ── Render active ─────────────────────────────────────────
+function render() {
+  const container=document.getElementById('loans-list');
+  const empty=document.getElementById('empty');
+  Array.from(container.children).forEach(c=>{ if(c!==empty) c.remove(); });
+  populateYears();
+  const visible=loans.filter(filterLoan).sort((a,b)=>{
+    const va=getLoanSortVal(a), vb=getLoanSortVal(b);
+    return va<vb?-sortDir:va>vb?sortDir:0;
+  });
+  if (visible.length===0) {
+    empty.classList.add('visible');
+    empty.querySelector('h3').textContent=loans.length===0?'Brak aktywnych kredytów':'Brak wyników filtrowania';
+    empty.querySelector('p').textContent=loans.length===0?'Dodaj pierwszy harmonogram klikając przycisk powyżej.':'Zmień kryteria filtrowania.';
+    return;
+  }
+  empty.classList.remove('visible');
+  visible.forEach(loan=>{
+    const card=document.createElement('div');
+    card.className='loan-card';
+    card.innerHTML=buildLoanCard(loan,false);
+    container.appendChild(card);
+  });
+}
+
+// ── Render archive ────────────────────────────────────────
+function renderArchive() {
+  const container=document.getElementById('archive-list');
+  const empty=document.getElementById('archive-empty');
+  Array.from(container.children).forEach(c=>{ if(c!==empty) c.remove(); });
+  if (archivedLoans.length===0) { empty.classList.add('visible'); return; }
+  empty.classList.remove('visible');
+  archivedLoans.forEach(loan=>{
+    const card=document.createElement('div');
+    card.className='loan-card archived';
+    card.innerHTML=buildLoanCard(loan,true);
+    container.appendChild(card);
+  });
+}
+
+// ── Summary ───────────────────────────────────────────────
+function updateSummary() {
+  const today=new Date().toISOString().slice(0,10);
+  const ym=today.slice(0,7);
+  const nd=new Date(); nd.setDate(1); nd.setMonth(nd.getMonth()+1);
+  const nextYm=`${nd.getFullYear()}-${String(nd.getMonth()+1).padStart(2,'0')}`;
+  let totalDebt=0,totalPaid=0,nextDate=null,thisMonth=0,nextMonth=0;
+  const nextPerLoan=[];
+  loans.forEach(loan=>{
+    totalDebt+=loan.totalAmount;
+    const paid=loan.schedule.filter(i=>i.paid).reduce((s,i)=>s+i.total,0)
+              +(loan.overpayments||[]).reduce((s,o)=>s+o.amount,0);
+    totalPaid+=paid;
+    const next=loan.schedule.find(i=>!i.paid&&!i.skipped);
+    if (next) {
+      nextPerLoan.push({date:next.date,total:next.total});
+      if (!nextDate||next.date<nextDate) nextDate=next.date;
+      if (next.date.startsWith(ym)) thisMonth+=next.total;
+    }
+    nextMonth+=loan.schedule.filter(i=>!i.paid&&!i.skipped&&i.date.startsWith(nextYm)).reduce((s,i)=>s+i.total,0);
+  });
+  const nextAmt=nextDate?nextPerLoan.filter(n=>n.date===nextDate).reduce((s,n)=>s+n.total,0):0;
+  document.getElementById('s-debt').textContent=fmt(totalDebt);
+  document.getElementById('s-paid').textContent=fmt(totalPaid);
+  document.getElementById('s-next').textContent=nextDate?fmt(nextAmt):'—';
+  document.getElementById('s-month').textContent=fmt(thisMonth);
+  document.getElementById('s-next-month').textContent=fmt(nextMonth);
+  document.getElementById('s-remaining').textContent=fmt(Math.max(0,totalDebt-totalPaid));
+}
+
+// ── Toast ─────────────────────────────────────────────────
+let toastTimer;
+function showToast(msg) {
+  const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+// ── Manual sync ───────────────────────────────────────────
+async function manualSync() {
+  const btn=document.getElementById('sync-btn');
+  btn.style.transform='rotate(360deg)'; btn.style.transition='transform .4s ease';
+  setTimeout(()=>{ btn.style.transform=''; btn.style.transition='all .15s'; },400);
+  setSyncState('sync');
+  try {
+    const d=await apiGet(); loans=d.loans||[]; archivedLoans=d.archivedLoans||[];
+    setSyncState('ok'); render(); updateSummary();
+    if (currentTab==='archive') renderArchive();
+    showToast('✓ Zsynchronizowano');
+  } catch(e) { setSyncState('error'); showToast('⚠ Brak połączenia z serwerem'); }
+}
+
+document.getElementById('modal-overlay').addEventListener('click',e=>{ if(e.target===document.getElementById('modal-overlay')) closeModal(); });
+document.getElementById('overpay-overlay').addEventListener('click',e=>{ if(e.target===document.getElementById('overpay-overlay')) closeOverpay(); });
+document.getElementById('balance-overlay').addEventListener('click',e=>{ if(e.target===document.getElementById('balance-overlay')){ document.getElementById('balance-overlay').classList.remove('open'); balanceResolve=null; } });
+
+init();
+</script>
+</body>
+</html>

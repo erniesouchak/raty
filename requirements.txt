@@ -1,0 +1,1 @@
+# Brak zależności zewnętrznych — wystarczy Python 3.9+ (tylko biblioteka standardowa).

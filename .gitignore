@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+
+# Dane użytkownika (nigdy do repo)
+data.json
+archive.json
+.tmp-*.json
+
+# Lokalne ustawienia Claude Code
+.claude/
